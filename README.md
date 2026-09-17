@@ -1,25 +1,24 @@
-# 🌱 GreenLeaf Gardens - 3 Tier Application Deployment on AWS EKS
+# GreenLeaf Gardens - 3-Tier Application on AWS EKS
 
-## Project Overview
+A full-stack, three-tier application for managing gardening business operations, deployed on Amazon EKS with Kubernetes. The project demonstrates a complete containerized stack with:
 
-GreenLeaf Gardens is a 3-tier containerized web application deployed on Amazon EKS using Kubernetes.
+- Frontend: Nginx serving the web UI
+- Backend: Flask REST API
+- Database: MySQL persistence layer
 
-Architecture:
+## Architecture
 
 Frontend (Nginx)
-↓
+  ↓
 Backend (Flask API)
-↓
+  ↓
 MySQL Database
 
----
-
-## Technologies Used
+## Tech Stack
 
 - AWS EC2
-- AWS EKS
-- AWS ECR
-- AWS EBS CSI Driver
+- Amazon EKS
+- Amazon ECR
 - Docker
 - Kubernetes
 - Nginx
@@ -27,177 +26,146 @@ MySQL Database
 - MySQL
 - eksctl
 - kubectl
-
----
+- EBS CSI Driver
 
 ## Project Structure
 
-Docker_Application/
-
+```text
+aws-eks-three-tier-application/
 ├── backend/
-
-│ ├── Dockerfile
-
-│ ├── app.py
-
-│ └── requirements.txt
-
+│   ├── Dockerfile
+│   ├── app.py
+│   └── requirements.txt
 ├── frontend/
-
-│ ├── Dockerfile
-
-│ ├── nginx.conf
-
-│ └── html files
-
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── index.html
 ├── mysql/
-
-│ ├── Dockerfile
-
-│ └── init.sql
-
+│   ├── Dockerfile
+│   └── init.sql
 ├── kubernetes/
-
-│ ├── backend/
-
-│ │ ├── backend-deployment.yaml
-
-│ │ └── backend-service.yaml
-
-│ ├── frontend/
-
-│ │ ├── frontend-deployment.yaml
-
-│ │ └── frontend-service.yaml
-
-│ └── mysql/
-
-│ ├── mysql-deployment.yaml
-
-│ ├── mysql-service.yaml
-
-│ └── mysql-pvc.yaml
-
-└── docker-compose.yml
-
----
-
-## Docker Images
-
-### Backend
-
-821263771829.dkr.ecr.eu-north-1.amazonaws.com/greenleaf-backend:latest
-
-### Frontend
-
-821263771829.dkr.ecr.eu-north-1.amazonaws.com/greenleaf-frontend:latest
-
-### MySQL
-
-821263771829.dkr.ecr.eu-north-1.amazonaws.com/greenleaf-mysql:latest
-
----
-
-## Create EKS Cluster
-
-```bash
-eksctl create cluster \
---name greenleaf-cluster \
---region eu-north-1 \
---nodegroup-name workers \
---node-type t3.medium \
---nodes 2
+│   ├── backend/
+│   │   ├── backend-deployment.yaml
+│   │   └── backend-service.yaml
+│   ├── frontend/
+│   │   ├── frontend-deployment.yaml
+│   │   └── frontend-service.yaml
+│   ├── mysql/
+│   │   ├── mysql-deployment.yaml
+│   │   ├── mysql-service.yaml
+│   │   └── mysql-pvc.yaml
+│   ├── namespace.yaml
+│   └── secrets.yaml
+├── docker-compose.yml
+├── .env.example
+├── .gitignore
+├── README.md
+└── LICENSE (if added separately)
 ```
 
----
+## Features
 
-## Configure kubectl
-
-```bash
-aws eks update-kubeconfig \
---region eu-north-1 \
---name greenleaf-cluster
-```
-
----
-
-## Install EBS CSI Driver
-
-```bash
-eksctl utils associate-iam-oidc-provider \
---region eu-north-1 \
---cluster greenleaf-cluster \
---approve
-```
-
-```bash
-eksctl create addon \
---name aws-ebs-csi-driver \
---cluster greenleaf-cluster \
---region eu-north-1 \
---force
-```
-
----
-
-## Deploy Kubernetes Resources
-
-### MySQL
-
-```bash
-kubectl apply -f kubernetes/mysql/
-```
-
-### Backend
-
-```bash
-kubectl apply -f kubernetes/backend/
-```
-
-### Frontend
-
-```bash
-kubectl apply -f kubernetes/frontend/
-```
-
----
-
-## Verify Deployment
-
-```bash
-kubectl get pods -n greenleaf
-```
-
-```bash
-kubectl get svc -n greenleaf
-```
-
-```bash
-kubectl get pvc -n greenleaf
-```
-
----
-
-## Application Output
-
-Dashboard Features:
+The application provides a dashboard for managing:
 
 - Products
 - Customers
 - Orders
 - Employees
-- Projects
-- Revenue
+- Garden Projects
+- Revenue and business insights
 
----
+## Backend API
 
-## Load Balancer URL
+The Flask service exposes REST endpoints for dashboard data and CRUD operations, including:
 
-```text
-http://ac5e87aaf065d4fd8b88f98e5321b2b8-205638751.eu-north-1.elb.amazonaws.com/
+- `/api/health`
+- `/api/dashboard`
+- `/api/products`
+- `/api/customers`
+- `/api/employees`
+- `/api/orders`
+- `/api/projects`
+
+## Local Development
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Bhuvanesh-432/aws-eks-three-tier-application.git
+cd aws-eks-three-tier-application
 ```
 
----
+### 2. Configure Environment
+
+Copy the example environment file and update the values if needed:
+
+```bash
+cp .env.example .env
+```
+
+### 3. Run with Docker Compose
+
+```bash
+docker-compose up --build
+```
+
+This starts the frontend, backend, and MySQL database locally.
+
+## AWS EKS Deployment
+
+### 1. Create EKS Cluster
+
+```bash
+eksctl create cluster \
+  --name greenleaf-cluster \
+  --region eu-north-1 \
+  --nodegroup-name workers \
+  --node-type t3.medium \
+  --nodes 2
+```
+
+### 2. Configure kubectl
+
+```bash
+aws eks update-kubeconfig \
+  --region eu-north-1 \
+  --name greenleaf-cluster
+```
+
+### 3. Install EBS CSI Driver
+
+```bash
+eksctl utils associate-iam-oidc-provider \
+  --region eu-north-1 \
+  --cluster greenleaf-cluster \
+  --approve
+```
+
+```bash
+eksctl create addon \
+  --name aws-ebs-csi-driver \
+  --cluster greenleaf-cluster \
+  --region eu-north-1 \
+  --force
+```
+
+### 4. Deploy Kubernetes Resources
+
+```bash
+kubectl apply -f kubernetes/namespace.yaml
+kubectl apply -f kubernetes/secrets.yaml
+kubectl apply -f kubernetes/mysql/
+kubectl apply -f kubernetes/backend/
+kubectl apply -f kubernetes/frontend/
+```
+
+### 5. Verify Deployment
+
+```bash
+kubectl get pods -n greenleaf
+kubectl get svc -n greenleaf
+kubectl get pvc -n greenleaf
+```
 
 ## Kubernetes Resources
 
@@ -216,16 +184,37 @@ http://ac5e87aaf065d4fd8b88f98e5321b2b8-205638751.eu-north-1.elb.amazonaws.com/
 ### Storage
 
 - PersistentVolumeClaim
-- AWS EBS Volume
+- AWS EBS-backed storage
 
----
+## Application URL
 
-## Screenshots
+```text
+http://ac5e87aaf065d4fd8b88f98e5321b2b8-205638751.eu-north-1.elb.amazonaws.com/
+```
 
-### Dashboard Successfully Running
+## Docker Images
 
-(Add project screenshots here)
----
+### Backend
+
+```text
+821263771829.dkr.ecr.eu-north-1.amazonaws.com/greenleaf-backend:latest
+```
+
+### Frontend
+
+```text
+821263771829.dkr.ecr.eu-north-1.amazonaws.com/greenleaf-frontend:latest
+```
+
+### MySQL
+
+```text
+821263771829.dkr.ecr.eu-north-1.amazonaws.com/greenleaf-mysql:latest
+```
+
+## Notes
+
+This project is intended to demonstrate a practical AWS EKS deployment workflow for a containerized application, including service networking, database persistence, and Kubernetes resource management.
 
 ## Author
 
