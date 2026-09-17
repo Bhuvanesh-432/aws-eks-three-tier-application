@@ -1,40 +1,81 @@
 apiVersion: apps/v1
 kind: Deployment
-
 metadata:
   name: backend
   namespace: greenleaf
-
 spec:
   replicas: 2
-
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: backend
-
   template:
     metadata:
       labels:
         app: backend
-
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: backend
-
-        image: 821263771829.dkr.ecr.eu-north-1.amazonaws.com/greenleaf-backend:latest
-
-        ports:
-        - containerPort: 5000
-
-        env:
-        - name: DB_HOST
-          value: mysql-service
-
-        - name: DB_USER
-          value: gardenuser
-
-        - name: DB_PASSWORD
-          value: gardenpass
-
-        - name: DB_NAME
-          value: gardening_db
+        - name: backend
+          image: 821263771829.dkr.ecr.eu-north-1.amazonaws.com/greenleaf-backend:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DB_HOST
+              value: mysql-service
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_PASSWORD
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_NAME
+            - name: CORS_ALLOWED_ORIGINS
+              value: "*"
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL

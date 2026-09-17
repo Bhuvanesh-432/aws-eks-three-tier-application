@@ -1,8 +1,6 @@
 version: '3.9'
 
 services:
-
-  # ── Tier 1: MySQL Database ─────────────────────────────────────────────────
   mysql:
     build:
       context: ./mysql
@@ -10,23 +8,22 @@ services:
     container_name: greenleaf_mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: gardening_db
-      MYSQL_USER: gardenuser
-      MYSQL_PASSWORD: gardenpass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-gardening_db}
+      MYSQL_USER: ${MYSQL_USER:-gardenuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change-me}
     volumes:
       - mysql_data:/var/lib/mysql
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - greenleaf_net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-change-me}"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
 
-  # ── Tier 2: Flask Backend API ─────────────────────────────────────────────
   backend:
     build:
       context: ./backend
@@ -34,10 +31,14 @@ services:
     container_name: greenleaf_backend
     restart: unless-stopped
     environment:
-      DB_HOST: mysql
-      DB_USER: gardenuser
-      DB_PASSWORD: gardenpass
-      DB_NAME: gardening_db
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER:-gardenuser}
+      DB_PASSWORD: ${DB_PASSWORD:-change-me}
+      DB_NAME: ${DB_NAME:-gardening_db}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
+      DB_CONNECT_RETRIES: ${DB_CONNECT_RETRIES:-10}
+      DB_CONNECT_WAIT_SECONDS: ${DB_CONNECT_WAIT_SECONDS:-3}
     depends_on:
       mysql:
         condition: service_healthy
@@ -46,7 +47,6 @@ services:
     expose:
       - "5000"
 
-  # ── Tier 3: Nginx + Frontend ──────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
@@ -60,13 +60,10 @@ services:
     networks:
       - greenleaf_net
 
-# ── Volumes ───────────────────────────────────────────────────────────────────
 volumes:
   mysql_data:
     driver: local
 
-# ── Networks ──────────────────────────────────────────────────────────────────
 networks:
   greenleaf_net:
     driver: bridge
-

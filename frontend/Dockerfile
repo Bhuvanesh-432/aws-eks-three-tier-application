@@ -1,12 +1,14 @@
-FROM nginx:alpine
+FROM nginx:1.27-alpine
 
-# Remove default nginx page
-RUN rm -rf /usr/share/nginx/html/*
+RUN rm -rf /usr/share/nginx/html/* \
+    && mkdir -p /var/cache/nginx /var/run /usr/share/nginx/html \
+    && chown -R nginx:nginx /var/cache/nginx /var/run /usr/share/nginx/html /etc/nginx/conf.d
 
-# Copy frontend files
 COPY index.html /usr/share/nginx/html/index.html
-
-# Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
+
+USER nginx
+
+CMD ["nginx", "-g", "daemon off;"]

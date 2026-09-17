@@ -1,16 +1,14 @@
 apiVersion: v1
 kind: Service
-
 metadata:
   name: frontend-service
   namespace: greenleaf
-
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/"
 spec:
   selector:
     app: frontend
-
   ports:
-  - port: 80
-    targetPort: 80
-
+    - port: 80
+      targetPort: 80
   type: LoadBalancer
